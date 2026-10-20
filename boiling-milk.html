@@ -2,28 +2,32 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#160d08">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Boiling Milk — Don't Let It Spill!</title>
 <style>
   * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; }
+  html, body { height: 100%; height: 100dvh; margin: 0; }
   body {
     display: grid; place-items: center;
     background: radial-gradient(1200px 800px at 50% 0%, #3a2418 0%, #160d08 72%);
     font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
-    overflow: hidden; user-select: none; -webkit-tap-highlight-color: transparent;
+    overflow: hidden; overscroll-behavior: none; user-select: none; -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
   }
   canvas {
     display: block; border-radius: 20px; touch-action: none;
     box-shadow: 0 40px 120px rgba(0,0,0,.7), 0 0 0 1px rgba(255,200,140,.12);
-    max-width: 100vw; max-height: 100vh;
+    max-width: 100vw; max-height: 100vh; max-height: 100dvh;
   }
   .overlay {
     position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center;
-    padding: 20px; background: radial-gradient(900px 600px at 50% 40%, rgba(30,16,8,.3), rgba(10,5,2,.78));
+    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    background: radial-gradient(900px 600px at 50% 40%, rgba(30,16,8,.3), rgba(10,5,2,.78));
     backdrop-filter: blur(5px); animation: fade .25s ease;
   }
-  .overlay.hidden { display: none; }
+  .overlay.hidden { display: none !important; }
   @keyframes fade { from { opacity: 0 } to { opacity: 1 } }
   .card {
     position: relative; width: min(660px, 94vw); padding: 32px 38px 26px;
@@ -56,8 +60,9 @@
   }
   .row.warn { color: #b8341c; font-weight: 800; }
   .row.warn .key { background: #b8341c; box-shadow: 0 2px 0 #6e1c0e; color: #fff1e6; }
+  .touch-only { display: none; }
   button.play {
-    cursor: pointer; border: 0; border-radius: 16px; padding: 16px 42px;
+    cursor: pointer; border: 0; border-radius: 16px; padding: 16px 42px; touch-action: manipulation;
     font-family: inherit; font-size: 19px; font-weight: 900; letter-spacing: 1.5px; color: #fff;
     background: linear-gradient(180deg, #ff9a46, #ef5a2a 60%, #d8431b);
     box-shadow: 0 7px 0 #9a2c10, 0 16px 30px rgba(210,70,25,.42);
@@ -72,6 +77,74 @@
   .stat b { display: block; font-size: 24px; color: #5b2f12; line-height: 1.1; }
   .stat span { font-size: 10px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; color: #a07a5c; }
   .over-msg { margin: 6px auto 0; max-width: 430px; font-size: 14.5px; color: #7a5136; }
+
+  /* rotate prompt */
+  #rotateScreen {
+    display: none; z-index: 30;
+    background: radial-gradient(700px 500px at 50% 40%, rgba(50,28,14,.94), rgba(10,5,2,.98));
+  }
+  .rotate-card { text-align: center; color: #ffe9cf; max-width: 360px; padding: 10px 20px; }
+  .rotate-icon {
+    width: 74px; height: 118px; margin: 0 auto 22px; border: 4px solid #ffcf9b; border-radius: 16px;
+    position: relative; transform: rotate(90deg); animation: tilt 2.4s ease-in-out infinite;
+    box-shadow: 0 0 34px rgba(255,170,90,.35);
+  }
+  .rotate-icon::before { content: ''; position: absolute; top: 8px; left: 50%; width: 24px; height: 4px; border-radius: 3px; background: #ffcf9b; transform: translateX(-50%); }
+  .rotate-icon::after { content: ''; position: absolute; inset: 20px 10px 14px; border-radius: 8px; background: linear-gradient(160deg, #f7dcb9, #d99455); opacity: .55; }
+  @keyframes tilt { 0%, 30% { transform: rotate(90deg) } 55%, 100% { transform: rotate(0deg) } }
+  .rotate-card h2 { font-size: 28px; margin: 0 0 10px; color: #ffd9a4; letter-spacing: 1px; }
+  .rotate-card p { font-size: 14px; line-height: 1.5; color: #d9b796; margin: 0 0 22px; }
+  .rotate-card button { font-size: 14px; padding: 12px 22px; }
+  @media (orientation: portrait) and (pointer: coarse) and (max-width: 900px) {
+    #rotateScreen { display: flex; }
+  }
+  body.allow-portrait #rotateScreen { display: none !important; }
+
+  /* touch devices */
+  @media (pointer: coarse) {
+    .desktop-only { display: none; }
+    .touch-only { display: flex; }
+    .key { min-width: 78px; padding: 7px 10px; font-size: 11.5px; }
+    button.play { padding: 17px 42px; }
+  }
+
+  /* short screens (phones in landscape, small laptops) */
+  @media (max-height: 700px) {
+    .overlay { padding: 10px 16px; }
+    .card {
+      max-height: calc(100vh - 20px); max-height: calc(100dvh - 20px); overflow-y: auto;
+      scrollbar-width: thin; padding: 20px 28px 18px; border-radius: 22px;
+    }
+    .steam { display: none; }
+    .tag { margin: 6px auto 10px; font-size: 13px; line-height: 1.35; }
+    .how { gap: 5px; margin-bottom: 12px; }
+    .row { font-size: 12.5px; gap: 8px; }
+    .key { min-width: 66px; padding: 4px 7px; font-size: 10px; }
+    h1 { font-size: clamp(28px, 8vh, 44px); }
+    h1 .milk { letter-spacing: 2px; }
+    button.play { padding: 12px 30px; font-size: 16px; box-shadow: 0 5px 0 #9a2c10, 0 12px 24px rgba(210,70,25,.4); }
+    .hint { margin-top: 10px; font-size: 10.5px; }
+    .stats { margin: 10px 0 14px; gap: 8px; }
+    .stat { min-width: 88px; padding: 8px 8px; }
+    .stat b { font-size: 19px; }
+    .stat span { font-size: 8.5px; }
+    .over-title { font-size: clamp(26px, 8vh, 40px); }
+    .over-msg { font-size: 12.5px; margin-top: 2px; }
+  }
+  @media (max-height: 500px) {
+    .card { padding: 14px 22px 12px; }
+    h1 { font-size: 30px; }
+    .tag { display: none; }
+    .how { gap: 3px; margin-bottom: 9px; }
+    .row { font-size: 11.5px; }
+    .key { min-width: 60px; padding: 3px 6px; font-size: 9px; }
+    button.play { padding: 9px 24px; font-size: 14px; }
+    .hint { display: none; }
+    .stats { margin: 6px 0 10px; }
+    .stat { min-width: 76px; padding: 6px; }
+    .stat b { font-size: 17px; }
+    .stat span { font-size: 8px; }
+  }
 </style>
 </head>
 <body>
@@ -81,15 +154,18 @@
   <div class="card">
     <div class="steam"><span></span><span></span><span></span></div>
     <h1>BOILING <span class="milk">MILK</span></h1>
-    <p class="tag">The milk is on the stove. Keep it in the pot, keep the stove low, and keep your eyes on it — Mum is watching.</p>
+    <p class="tag">The milk is on the stove. Keep it in the pot, keep the stove low, and keep your eyes on it — Mum is watching. Blowing runs on energy, so catch your breath.</p>
     <div class="how">
-      <div class="row"><span class="key">HOLD SPACE</span> blow on the milk</div>
-      <div class="row"><span class="key">CLICK POT</span> or hold the big BLOW button</div>
-      <div class="row"><span class="key">↑ ↓ / DRAG</span> lower or raise the stove</div>
-      <div class="row warn"><span class="key">DON'T</span> look away. Don't check your phone. 👡</div>
+      <div class="row desktop-only"><span class="key">HOLD SPACE</span> blow on the milk</div>
+      <div class="row desktop-only"><span class="key">CLICK POT</span> or hold the big BLOW button</div>
+      <div class="row desktop-only"><span class="key">↑ ↓ / DRAG</span> lower or raise the stove</div>
+      <div class="row touch-only"><span class="key">HOLD BLOW</span> or hold the pot to blow</div>
+      <div class="row touch-only"><span class="key">DRAG KNOB</span> down to cool, up to heat</div>
+      <div class="row"><span class="key">ENERGY</span> stop blowing to recharge</div>
+      <div class="row warn"><span class="key">DON'T</span> look away. Notifications are risky points. 👡</div>
     </div>
     <button id="playBtn" class="play">START COOKING</button>
-    <p class="hint">3 lives · 1 angry mummy</p>
+    <p class="hint">3 lives · 1 angry mummy · many notifications</p>
   </div>
 </div>
 
@@ -102,9 +178,19 @@
       <div class="stat"><b id="overBest">0</b><span>Best</span></div>
       <div class="stat"><b id="overSpills">0</b><span>Spills</span></div>
       <div class="stat"><b id="overSlaps">0</b><span>Slipper hits</span></div>
+      <div class="stat"><b id="overNotifs">0</b><span>Notifs</span></div>
     </div>
     <button id="retryBtn" class="play">TRY AGAIN</button>
     <p class="hint">Mum is still watching</p>
+  </div>
+</div>
+
+<div id="rotateScreen" class="overlay">
+  <div class="rotate-card">
+    <div class="rotate-icon"></div>
+    <h2>Turn the phone sideways</h2>
+    <p>Landscape gives you room to watch the pot, blow, and work the stove with your thumbs.</p>
+    <button id="portraitBtn" class="play">PLAY IN PORTRAIT ANYWAY</button>
   </div>
 </div>
 
@@ -121,6 +207,7 @@
   const overBest = document.getElementById('overBest');
   const overSpills = document.getElementById('overSpills');
   const overSlaps = document.getElementById('overSlaps');
+  const overNotifs = document.getElementById('overNotifs');
   const overMsg = document.getElementById('overMsg');
 
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -140,14 +227,38 @@
     mute: { x: 1240, y: 682, r: 18 },
   };
 
+  const IS_TOUCH = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
+    ('ontouchstart' in window);
+
+  function phoneRect() {
+    return IS_TOUCH ? { x: 380, y: 120, w: 520, h: 132 } : L.phone;
+  }
+
+  // name, message, reward and rarity. Rarer = more points + more look-away time.
+  const NOTIFS = [
+    { name: 'MUM · now', text: '"Beta, is the milk on?"', points: 50, weight: 24, icon: 'M', color: '#3b74ff', dur: 1.35 },
+    { name: 'RAHUL · friend', text: '"Bro, are you coming?"', points: 70, weight: 18, icon: 'R', color: '#22a06b', dur: 1.45 },
+    { name: 'COLLEGE GROUP', text: '127 new messages', points: 85, weight: 13, icon: 'GC', color: '#8b5cf6', dur: 1.5 },
+    { name: 'DELIVERY', text: 'Your biryani is at the door', points: 95, weight: 11, icon: '🍛', color: '#e67e22', dur: 1.5 },
+    { name: 'CRUSH', text: 'liked your photo', points: 115, weight: 9, icon: '❤', color: '#f06292', dur: 1.6 },
+    { name: 'UNKNOWN NUMBER', text: 'You have 1 missed call', points: 130, weight: 6, icon: '?', color: '#6b7280', dur: 1.6 },
+    { name: 'BOSS', text: '"Where is the report?"', points: 145, weight: 5, icon: '!', color: '#374151', dur: 1.7 },
+    { name: 'PRIYA ❤️', text: '"Why didn\'t you reply?!"', points: 160, weight: 7, icon: 'P', color: '#e84393', dur: 1.7 },
+    { name: 'BANK', text: '₹50,000 credited!', points: 185, weight: 4, icon: '₹', color: '#0c8f5a', dur: 1.75 },
+    { name: 'LOTTERY', text: 'You won ₹10,00,000!', points: 240, weight: 4, icon: '🎉', color: '#c99a16', dur: 1.9 },
+    { name: 'ELON MUSK ✓', text: '"Buying your stove. DM me."', points: 300, weight: 4, icon: 'X', color: '#111827', dur: 2.0 },
+  ];
+
   const state = {
     phase: 'menu', time: 0, animT: 0, best: 0, score: 0, lives: 3,
     heat: 30, setting: 62, level: 36, breath: 100,
     blowing: false, spaceHeld: false, blowHeld: false,
+    winded: 0, regenCd: 0, needRecover: false,
     suspicion: 0, pointerInside: false, pointerX: 0, pointerY: 0,
     knobDrag: null, slap: null, shake: 0, flash: 0, grace: 0,
     bubbles: [], steam: [], drips: [], sparks: [],
-    phone: null, phoneTimer: 11, phoneCheck: null, phoneCount: 0,
+    phone: null, phoneTimer: 11, phoneCheck: null, phoneCount: 0, phoneLast: null,
+    notificationsChecked: 0, notificationScore: 0,
     nextFlare: 18, awayShown: false,
     toastMsg: null, toastT: 0, toastColor: '#fff',
     spillVisual: 0, spills: 0, slaps: 0,
@@ -233,6 +344,18 @@
       this.tone(880, 0.12, 'sine', 0.08);
       setTimeout(() => this.tone(1120, 0.14, 'sine', 0.08), 160);
     },
+    reward(big) {
+      this.tone(880, 0.09, 'sine', 0.075);
+      setTimeout(() => this.tone(1180, 0.1, 'sine', 0.07), 90);
+      if (big) {
+        setTimeout(() => this.tone(1480, 0.12, 'sine', 0.07), 180);
+        setTimeout(() => this.tone(1975, 0.22, 'sine', 0.06), 280);
+      }
+    },
+    winded() {
+      this.tone(300, 0.32, 'sawtooth', 0.05, 90);
+      setTimeout(() => this.noiseBurst(0.22, 0.1, 900, 0.8), 70);
+    },
     beep(high) { this.tone(high ? 980 : 620, 0.09, 'square', 0.035); },
     gameOver() {
       const notes = [392, 349, 311, 233];
@@ -275,6 +398,32 @@
     const b = clamp((n & 255) + amt, 0, 255);
     return `rgb(${r},${g},${b})`;
   }
+  function fitText(str, maxW, size, weight) {
+    let s = size;
+    font(s, weight || 800);
+    while (s > 9 && ctx.measureText(str).width > maxW) {
+      s -= 0.5;
+      font(s, weight || 800);
+    }
+    return s;
+  }
+  function wrapText(str, maxW, size, weight, maxLines) {
+    font(size, weight || 800);
+    const words = String(str).split(' ');
+    const lines = [];
+    let line = '';
+    for (const word of words) {
+      const test = line ? line + ' ' + word : word;
+      if (ctx.measureText(test).width <= maxW || !line) line = test;
+      else { lines.push(line); line = word; }
+    }
+    if (line) lines.push(line);
+    if (maxLines && lines.length > maxLines) {
+      lines.length = maxLines;
+      lines[maxLines - 1] = lines[maxLines - 1].replace(/.$/, '…');
+    }
+    return lines;
+  }
 
   // ===== responsive canvas =====
   let scaleK = 1;
@@ -291,7 +440,33 @@
     scaleK = (cssW / W) * dpr;
   }
   window.addEventListener('resize', resize);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', () => setTimeout(resize, 220));
   resize();
+
+  function portraitBlocked() {
+    return IS_TOUCH && !document.body.classList.contains('allow-portrait') &&
+      window.innerWidth < window.innerHeight && window.innerWidth <= 900;
+  }
+
+  function enterFullscreen() {
+    if (!IS_TOUCH) return;
+    try {
+      const el = document.documentElement;
+      if (document.fullscreenElement || !el.requestFullscreen) return;
+      const p = el.requestFullscreen({ navigationUI: 'hide' });
+      if (p && p.then) p.then(() => {
+        try {
+          if (screen.orientation && screen.orientation.lock) {
+            const lock = screen.orientation.lock('landscape');
+            if (lock && lock.catch) lock.catch(() => {});
+          }
+        } catch (e) {}
+        setTimeout(resize, 250);
+        setTimeout(resize, 700);
+      }).catch(() => {});
+    } catch (e) {}
+  }
 
   // ===== kitchen background =====
   function drawKitchen() {
@@ -659,15 +834,18 @@
 
   function drawBlowButton() {
     const b = L.blow;
-    // breath ring
+    const pct = clamp(state.breath / 100, 0, 1);
+    const low = pct < 0.28;
+    const winded = state.winded > 0;
+
+    // energy ring
     ctx.lineCap = 'round';
     ctx.lineWidth = 10;
     ctx.strokeStyle = 'rgba(0,0,0,.28)';
     circle(b.x, b.y, b.r + 16); ctx.stroke();
-    const pct = clamp(state.breath / 100, 0, 1);
-    const low = pct < 0.28;
-    ctx.strokeStyle = low ? '#ff7a64' : '#7fe3ff';
-    ctx.globalAlpha = low ? 0.6 + Math.sin(state.animT * 12) * 0.3 : 0.9;
+    ctx.strokeStyle = winded ? '#ff5340' : low ? '#ffa14a' : '#7fe3ff';
+    ctx.globalAlpha = winded ? 0.55 + Math.sin(state.animT * 18) * 0.4
+      : low ? 0.65 + Math.sin(state.animT * 10) * 0.25 : 0.9;
     ctx.beginPath();
     ctx.arc(b.x, b.y, b.r + 16, -Math.PI / 2, -Math.PI / 2 + TAU * pct);
     ctx.stroke();
@@ -685,7 +863,8 @@
     ctx.save();
     ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 22; ctx.shadowOffsetY = 9;
     const g = ctx.createRadialGradient(b.x - 16, b.y - 20, 8, b.x, b.y, b.r + 4);
-    if (state.blowing) { g.addColorStop(0, '#c9f4ff'); g.addColorStop(0.55, '#4fc4e8'); g.addColorStop(1, '#1d7ea6'); }
+    if (winded) { g.addColorStop(0, '#ffc7bb'); g.addColorStop(0.55, '#d95a47'); g.addColorStop(1, '#8c2b1c'); }
+    else if (state.blowing) { g.addColorStop(0, '#c9f4ff'); g.addColorStop(0.55, '#4fc4e8'); g.addColorStop(1, '#1d7ea6'); }
     else { g.addColorStop(0, '#a6e7fb'); g.addColorStop(0.55, '#3fb6dd'); g.addColorStop(1, '#1a6f94'); }
     ctx.fillStyle = g;
     circle(b.x, b.y, b.r); ctx.fill();
@@ -698,7 +877,8 @@
     // wind icon
     ctx.save();
     ctx.translate(b.x, b.y - 16);
-    ctx.strokeStyle = '#eafcff'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+    ctx.strokeStyle = winded ? '#fff0ec' : '#eafcff';
+    ctx.lineWidth = 5; ctx.lineCap = 'round';
     for (let i = 0; i < 3; i++) {
       const off = i * 9;
       ctx.beginPath();
@@ -708,10 +888,20 @@
     }
     ctx.restore();
 
-    text('BLOW', b.x, b.y + 20, 23, '#ffffff', 'center', 900);
-    text('HOLD', b.x, b.y + 40, 9.5, 'rgba(255,255,255,.72)', 'center', 800);
-    text(state.blowing ? 'BLOWING…' : 'HOLD  SPACE  OR  CLICK POT',
-      b.x, b.y + b.r + 40, 10.5, 'rgba(255,240,215,.72)', 'center', 800);
+    text('BLOW', b.x, b.y + 20, IS_TOUCH ? 26 : 23, '#ffffff', 'center', 900);
+    text(winded ? 'WINDED' : state.needRecover ? 'RECOVER' : 'HOLD', b.x, b.y + 42, IS_TOUCH ? 11 : 9.5,
+      winded || state.needRecover ? '#ffe0d6' : 'rgba(255,255,255,.72)', 'center', 800);
+
+    // energy readout
+    text('ENERGY ' + Math.round(pct * 100) + '%', b.x, b.y - b.r - 37, IS_TOUCH ? 15 : 11,
+      low ? '#ffc08a' : 'rgba(255,242,220,.85)', 'center', 900);
+    text(winded ? 'CATCH YOUR BREATH…'
+      : state.needRecover ? 'RECHARGE TO 25%'
+      : state.blowing ? 'BLOWING…'
+      : state.breath < 99.5 ? 'RECHARGING…'
+      : (IS_TOUCH ? 'HOLD THE BUTTON OR POT' : 'HOLD  SPACE  OR  CLICK POT'),
+      b.x, b.y + b.r + 42, IS_TOUCH ? 12.5 : 10.5,
+      winded || state.needRecover ? '#ffb3a0' : 'rgba(255,240,215,.72)', 'center', 800);
   }
 
   // ===== flames =====
@@ -988,13 +1178,17 @@
   function startGame() {
     const s = state;
     Sfx.init();
+    enterFullscreen();
     s.phase = 'playing';
     s.time = 0;
     s.score = 0; s.lives = 3;
     s.heat = 30; s.setting = 58; s.level = 32; s.breath = 100;
+    s.winded = 0; s.regenCd = 0; s.needRecover = false;
     s.suspicion = 0; s.slap = null; s.shake = 0; s.flash = 0; s.grace = 0;
     s.bubbles = []; s.steam = []; s.drips = []; s.sparks = [];
-    s.phone = null; s.phoneCheck = null; s.phoneTimer = rand(9, 13);
+    s.phone = null; s.phoneCheck = null; s.phoneTimer = rand(9, 13); s.phoneLast = null;
+    s.phoneCount = 0;
+    s.notificationsChecked = 0; s.notificationScore = 0;
     s.nextFlare = rand(16, 22);
     s.spillVisual = 0; s.spills = 0; s.slaps = 0;
     s.toastMsg = null; s.toastT = 0;
@@ -1016,6 +1210,7 @@
     s.shake = 0.8; s.flash = 0.4;
     s.blowing = false; s.blowHeld = false; s.spaceHeld = false;
     Sfx.blow(false);
+    try { if (navigator.vibrate) navigator.vibrate([45, 35, 100]); } catch (e) {}
     s.phone = null; s.phoneCheck = null;
     if (reason === 'spill' || reason === 'look') {
       s.level = 100;
@@ -1052,7 +1247,8 @@
     Sfx.blow(false);
     if (s.lives <= 0) { gameOver(); return; }
     s.heat = 42; s.level = 40; s.setting = 55;
-    s.breath = Math.max(s.breath, 66);
+    s.breath = Math.max(s.breath, 58);
+    s.winded = 0; s.regenCd = 0.5; s.needRecover = false;
     s.suspicion = 0; s.grace = 2.2; s.shake = 0;
     toast('Alright… WATCH IT this time.', '#ffe6c8');
   }
@@ -1072,6 +1268,7 @@
     overBest.textContent = Math.floor(s.best).toLocaleString();
     overSpills.textContent = s.spills;
     overSlaps.textContent = s.slaps;
+    overNotifs.textContent = s.notificationsChecked;
     overMsg.textContent = s.spills > s.slaps - s.spills
       ? 'The stove, the wall, the floor… Mum is mop-in-hand and furious.'
       : 'You kept looking away. The slipper has spoken.';
@@ -1079,8 +1276,26 @@
     Sfx.gameOver();
   }
 
+  function pickNotification(rareOnly) {
+    let list = NOTIFS.filter(n => n.name !== state.phoneLast && (!rareOnly || n.points >= 150));
+    if (!list.length) list = NOTIFS.filter(n => !rareOnly || n.points >= 150);
+    if (!list.length) list = NOTIFS;
+    const total = list.reduce((sum, n) => sum + n.weight, 0);
+    let r = Math.random() * total;
+    for (const n of list) {
+      r -= n.weight;
+      if (r <= 0) return n;
+    }
+    return list[list.length - 1];
+  }
+
   function spawnPhone() {
-    state.phone = { t: 0, life: 6.5 };
+    // every third notification is a high-value one, so the good stuff shows up
+    const rareOnly = state.phoneCount > 0 && (state.phoneCount + 1) % 3 === 0;
+    const note = pickNotification(rareOnly);
+    state.phoneLast = note.name;
+    state.phone = { t: 0, life: note.points >= 200 ? 7.2 : 6.4, note };
+    state.phoneTimer = rand(9, 15);
     state.phoneCount++;
     Sfx.phoneRing();
   }
@@ -1088,12 +1303,16 @@
   function checkPhone() {
     const s = state;
     if (!s.phone || s.phoneCheck) return;
+    const note = s.phone.note || NOTIFS[0];
+    const points = note.points;
     s.phone = null;
-    s.phoneCheck = { t: 0, dur: 1.5 };
+    s.phoneCheck = { t: 0, dur: note.dur || 1.5, note, points };
     s.phoneTimer = rand(16, 24);
-    s.score += 50;
-    s.suspicion = Math.min(100, s.suspicion + 24);
-    Sfx.tick();
+    s.score += points;
+    s.notificationsChecked++;
+    s.notificationScore += points;
+    s.suspicion = Math.min(100, s.suspicion + 9 + points * 0.055);
+    Sfx.reward(points >= 150);
   }
 
   function adjustSetting(delta) {
@@ -1109,6 +1328,13 @@
     if (s.toastT > 0) s.toastT = Math.max(0, s.toastT - dt);
     updateParticles(dt);
     if (s.phase !== 'playing') return;
+
+    s.winded = Math.max(0, s.winded - dt);
+    s.regenCd = Math.max(0, s.regenCd - dt);
+    if (portraitBlocked()) {
+      if (s.blowing) { s.blowing = false; Sfx.blow(false); }
+      return;
+    }
 
     if (s.slap) {
       const sl = s.slap;
@@ -1136,7 +1362,9 @@
     // looking away
     if (s.spaceHeld || s.blowHeld || s.keys.up || s.keys.down) s.lastInput = s.animT;
     const watching = s.pointerInside || (s.animT - s.lastInput < 1.6);
-    if (!watching) {
+    if (s.phoneCheck) {
+      s.awayShown = false; // eyes are on the phone: no recovery, no extra look-away heat
+    } else if (!watching) {
       s.suspicion += 55 * dt;
       s.heat = Math.min(100, s.heat + 20 * dt);
       s.level += 5.5 * dt;
@@ -1159,12 +1387,16 @@
       if (s.phoneTimer <= 0 && s.time > 7) spawnPhone();
     }
     if (s.phoneCheck) {
-      s.phoneCheck.t += dt;
-      s.heat = Math.min(100, s.heat + 18 * dt);
-      s.level += 6 * dt;
-      if (s.phoneCheck.t >= s.phoneCheck.dur) {
+      const pc = s.phoneCheck;
+      pc.t += dt;
+      s.heat = Math.min(100, s.heat + (14 + pc.points * 0.03) * dt);
+      s.level += (4.5 + pc.points * 0.01) * dt;
+      if (pc.t >= pc.dur) {
         s.phoneCheck = null;
-        toast('+50 · that was risky…', '#ffe6b8');
+        const big = pc.points >= 200;
+        toast('+' + pc.points + (big ? '! Worth the risk?' : ' · that was risky…'),
+          big ? '#ffd873' : '#ffe6b8');
+        if (big) s.flash = Math.max(s.flash, 0.12);
       }
     }
 
@@ -1172,20 +1404,38 @@
     if (s.keys.up) s.setting = clamp(s.setting + 55 * dt, minSet, 100);
     if (s.keys.down) s.setting = clamp(s.setting - 55 * dt, minSet, 100);
 
-    // blowing
-    const want = (s.spaceHeld || s.blowHeld) && !s.phoneCheck;
-    const canBlow = want && s.breath > 0.5;
+    // blowing — costs energy; stop to recharge or you get winded
+    if (s.needRecover && s.breath >= 25) s.needRecover = false;
+    const want = (s.spaceHeld || s.blowHeld) && !s.phoneCheck && s.winded <= 0;
+    const canBlow = want && !s.needRecover && s.breath > 0.5;
     if (canBlow !== s.blowing) {
+      if (s.blowing && !canBlow && s.breath < 1) {
+        s.winded = Math.max(s.winded, 1.2);
+        Sfx.winded();
+        toast('😮‍💨 WINDED! Let the energy come back.', '#ffc7b3');
+      }
       s.blowing = canBlow;
       Sfx.blow(canBlow);
     }
     if (s.blowing) {
-      s.breath = Math.max(0, s.breath - 30 * dt);
-      s.heat = Math.max(10, s.heat - 17 * dt);
-      s.level = Math.max(4, s.level - 22 * dt);
-    } else {
-      s.breath = Math.min(100, s.breath + 17 * dt);
+      const power = 0.55 + 0.45 * (s.breath / 100);
+      s.regenCd = 0.55;
+      s.breath = Math.max(0, s.breath - 34 * dt);
+      s.heat = Math.max(10, s.heat - 17 * power * dt);
+      s.level = Math.max(4, s.level - 22 * power * dt);
+      if (s.breath <= 0) {
+        s.breath = 0;
+        s.winded = 1.5;
+        s.needRecover = true;
+        s.blowing = false;
+        Sfx.blow(false);
+        Sfx.winded();
+        toast('😮‍💨 WINDED! Let the energy come back.', '#ffc7b3');
+      }
+    } else if (s.regenCd <= 0) {
+      s.breath = Math.min(100, s.breath + (s.winded > 0 ? 7 : 15) * dt);
     }
+    if (!s.blowing && s.breath < 15) s.needRecover = true;
 
     // heat follows the knob
     s.heat += (s.setting - s.heat) * 0.85 * dt;
@@ -1403,7 +1653,9 @@
   function drawPhone() {
     const p = state.phone;
     if (!p) return;
-    const L0 = L.phone;
+    const note = p.note || NOTIFS[0];
+    const L0 = phoneRect();
+    const big = IS_TOUCH;
     const t = p.t;
     const slide = clamp(t / 0.28, 0, 1);
     const ease = 1 - Math.pow(1 - slide, 3);
@@ -1411,34 +1663,77 @@
     const fade = out < 0.35 ? clamp(out / 0.35, 0, 1) : 1;
     const y = L0.y - 30 + ease * 30;
     const x = L0.x + (1 - ease) * 40;
+    const rare = note.points >= 200;
+    const padX = big ? 26 : 20;
+    const iconS = big ? 62 : 50;
+    const iconX = x + padX;
+    const iconY = y + (big ? 28 : 22);
+    const tx = iconX + iconS + 16;
+    const nameY = y + (big ? 38 : 28);
+    const msgY = y + (big ? 68 : 50);
+    const pillH = big ? 22 : 18;
+    const pillY = y + L0.h - (big ? 32 : 30);
     ctx.save();
     ctx.globalAlpha = fade;
-    ctx.shadowColor = 'rgba(50,25,10,.4)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 10;
+    ctx.shadowColor = rare ? 'rgba(220,175,60,.75)' : 'rgba(50,25,10,.4)';
+    ctx.shadowBlur = rare ? 40 : 24; ctx.shadowOffsetY = 10;
     ctx.fillStyle = '#fffdf8';
     rr(x, y, L0.w, L0.h, 18); ctx.fill();
     ctx.shadowColor = 'transparent';
-    ctx.fillStyle = '#eef4ff';
+    const bg = ctx.createLinearGradient(x, y, x + L0.w, y + L0.h);
+    bg.addColorStop(0, '#f7fbff'); bg.addColorStop(1, '#edf2fa');
+    ctx.fillStyle = bg;
     rr(x + 4, y + 4, L0.w - 8, L0.h - 8, 15); ctx.fill();
+    if (rare) {
+      ctx.strokeStyle = 'rgba(230,185,70,' + (0.65 + Math.sin(state.animT * 6) * 0.25) + ')';
+      ctx.lineWidth = 2.5;
+      rr(x + 2, y + 2, L0.w - 4, L0.h - 4, 16); ctx.stroke();
+    }
+
     // app icon
-    const ig = ctx.createLinearGradient(x + 20, y + 22, x + 66, y + 70);
-    ig.addColorStop(0, '#7cc7ff'); ig.addColorStop(1, '#3b74ff');
+    const ig = ctx.createLinearGradient(iconX, iconY, iconX + iconS, iconY + iconS);
+    ig.addColorStop(0, shade(note.color, 38));
+    ig.addColorStop(1, shade(note.color, -26));
     ctx.fillStyle = ig;
-    rr(x + 20, y + 22, 50, 50, 14); ctx.fill();
-    ctx.fillStyle = '#fff';
-    rr(x + 34, y + 33, 22, 30, 4); ctx.fill();
-    ctx.fillStyle = '#3b74ff';
-    rr(x + 37, y + 37, 16, 18, 2); ctx.fill();
-    // texts
-    text('MUM  ·  now', x + 86, y + 30, 11, '#8a6a52', 'left', 800);
-    text('"Beta, is the milk on?"', x + 86, y + 52, 15, '#3b2a1e', 'left', 800);
-    text('TAP TO CHECK  +50', x + 86, y + 74, 10, '#3b74ff', 'left', 800);
-    if (out < 2) text('...', x + L0.w - 26, y + 30, 15, '#b09070', 'center', 800);
+    rr(iconX, iconY, iconS, iconS, big ? 16 : 14); ctx.fill();
+    const emoji = /[^\x00-\x7F]/.test(note.icon);
+    text(note.icon, iconX + iconS / 2, iconY + iconS / 2,
+      emoji ? (big ? 32 : 26) : note.icon.length > 1 ? (big ? 20 : 16) : (big ? 30 : 24),
+      '#fff', 'center', 900);
+
+    // sender + reward
+    text(note.name, tx, nameY, big ? 13 : 10.5, '#8a6a52', 'left', 800);
+    if (rare) {
+      const bw = big ? 58 : 50, bh = big ? 24 : 20;
+      ctx.fillStyle = 'rgba(201,154,22,.16)';
+      rr(x + L0.w - (big ? 80 : 70), y + (big ? 20 : 17), bw, bh, bh / 2); ctx.fill();
+      text('RARE', x + L0.w - (big ? 51 : 45), y + (big ? 32 : 27), big ? 10.5 : 9,
+        '#a2780c', 'center', 900);
+    } else if (out < 2.4) {
+      text('…', x + L0.w - (big ? 30 : 24), nameY, big ? 17 : 14, '#b09070', 'center', 800);
+    }
+
+    // message
+    const msgW = L0.w - (tx - x) - (big ? 26 : 20);
+    const msgSize = fitText(note.text, msgW, big ? 18 : 14.5, 800);
+    text(note.text, tx, msgY, msgSize, '#33251a', 'left', 800);
+
+    // reward pill + call to action
+    const label = '+' + note.points + ' PTS';
+    font(big ? 11.5 : 9.5, 900);
+    const pillW = Math.max(big ? 78 : 62, ctx.measureText(label).width + (big ? 24 : 18));
+    ctx.fillStyle = note.color;
+    rr(tx, pillY, pillW, pillH, pillH / 2); ctx.fill();
+    text(label, tx + pillW / 2, pillY + pillH / 2 + 0.5, big ? 11.5 : 9.5, '#fff', 'center', 900);
+    text('TAP TO CHECK', x + L0.w - (big ? 24 : 20), pillY + pillH / 2 + 0.5,
+      big ? 11 : 9, '#8a6a52', 'right', 800);
     ctx.restore();
   }
 
   function drawPhoneCheck() {
     const pc = state.phoneCheck;
     if (!pc) return;
+    const note = pc.note || NOTIFS[0];
     const t = pc.t;
     const a = t < 0.18 ? t / 0.18 : (pc.dur - t < 0.2 ? clamp((pc.dur - t) / 0.2, 0, 1) : 1);
     ctx.save();
@@ -1459,18 +1754,38 @@
     ctx.fillStyle = '#3b74ff';
     rr(-30, -222, 60, 8, 4); ctx.fill();
     text('9:41', 0, -196, 14, '#3b5a78', 'center', 800);
-    // messages
+    // lock-screen notification
     ctx.fillStyle = '#fff';
-    rr(-100, -150, 200, 124, 16); ctx.fill();
-    text('MUM', -84, -128, 11, '#8a6a52', 'left', 800);
-    text('Is the milk boiling?', -84, -100, 14, '#3b2a1e', 'left', 800);
-    text('Answer me!', -84, -74, 14, '#3b2a1e', 'left', 800);
-    text('now', -84, -46, 10, '#9b8b7a', 'left', 700);
-    ctx.fillStyle = '#9fd0ff';
-    rr(24, -56, 62, 34, 17); ctx.fill();
-    text('reply', 55, -39, 11, '#174b8a', 'center', 800);
-    text('YOU LOOKED AWAY...', 0, 40, 20, '#b8341c', 'center', 900);
-    text('The stove is getting hotter!', 0, 72, 13, '#37506e', 'center', 700);
+    rr(-100, -168, 200, 136, 16); ctx.fill();
+    if (note.points >= 200) {
+      ctx.strokeStyle = '#d8a72c'; ctx.lineWidth = 2;
+      rr(-99, -167, 198, 134, 15); ctx.stroke();
+    }
+    ctx.fillStyle = note.color;
+    rr(-100, -152, 5, 104, 2.5); ctx.fill();
+    // app icon
+    const ig = ctx.createLinearGradient(-84, -150, -56, -122);
+    ig.addColorStop(0, shade(note.color, 38)); ig.addColorStop(1, shade(note.color, -26));
+    ctx.fillStyle = ig;
+    rr(-84, -150, 28, 28, 8); ctx.fill();
+    const emoji = /[^\x00-\x7F]/.test(note.icon);
+    text(note.icon, -70, -136, emoji ? 16 : note.icon.length > 1 ? 11 : 15, '#fff', 'center', 900);
+    const nameSize = fitText(note.name, 100, 10, 900);
+    text(note.name, -48, -134, nameSize, '#5f4a38', 'left', 900);
+    text('now', 84, -134, 9, '#9b8b7a', 'right', 700);
+    const lines = wrapText(note.text, 168, 12.5, 800, 2);
+    lines.forEach((line, i) => text(line, -84, -106 + i * 19, 12.5, '#33251a', 'left', 800));
+    const label = '+' + note.points + ' PTS';
+    font(9.5, 900);
+    const pillW = Math.max(58, ctx.measureText(label).width + 18);
+    ctx.fillStyle = note.color;
+    rr(-84, -55, pillW, 18, 9); ctx.fill();
+    text(label, -84 + pillW / 2, -45.5, 9.5, '#fff', 'center', 900);
+    text('YOU LOOKED AWAY...', 0, 34, 20, '#b8341c', 'center', 900);
+    text('The stove is getting hotter!', 0, 62, 13, '#37506e', 'center', 700);
+    text('SUSPICION +' + Math.round(9 + note.points * 0.055), 0, 90, 11.5, '#b8341c', 'center', 900);
+    text(state.notificationScore > 0 ? '+ ' + state.notificationScore + ' POINTS SO FAR' : '+ ' + note.points + ' POINTS',
+      0, 114, 10, '#5d7188', 'center', 800);
     ctx.restore();
     ctx.restore();
   }
@@ -1663,17 +1978,18 @@
 
     // heat + milk gauges
     hudPanel(430, 18, 420, 94);
-    text('HEAT', 450, 43, 10, 'rgba(255,220,180,.65)', 'left', 800);
-    text(Math.round(s.heat) + '%', 826, 43, 12, s.heat > 82 ? '#ff8a6a' : '#ffd9a4', 'right', 800);
+    const hu = IS_TOUCH;
+    text('HEAT', 450, 43, hu ? 11.5 : 10, 'rgba(255,220,180,.65)', 'left', 800);
+    text(Math.round(s.heat) + '%', 826, 43, hu ? 14 : 12, s.heat > 82 ? '#ff8a6a' : '#ffd9a4', 'right', 800);
     bar(505, 36, 310, 13, s.heat / 100, '#62d68b', '#ff4d3d');
     // boil tick at 55
     const bx = 505 + 310 * 0.45;
     ctx.strokeStyle = 'rgba(255,255,255,.65)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(bx, 33); ctx.lineTo(bx, 52); ctx.stroke();
-    text('BOIL', bx, 60, 7.5, 'rgba(255,240,220,.7)', 'center', 800);
+    text('BOIL', bx, 60, hu ? 9 : 7.5, 'rgba(255,240,220,.7)', 'center', 800);
 
-    text('MILK', 450, 83, 10, 'rgba(255,220,180,.65)', 'left', 800);
-    text(Math.round(s.level) + '%', 826, 83, 12, s.level > 88 ? '#ff8a6a' : '#fff0d0', 'right', 800);
+    text('MILK', 450, 83, hu ? 11.5 : 10, 'rgba(255,220,180,.65)', 'left', 800);
+    text(Math.round(s.level) + '%', 826, 83, hu ? 14 : 12, s.level > 88 ? '#ff8a6a' : '#fff0d0', 'right', 800);
     bar(505, 76, 310, 13, s.level / 100, '#fff7e6', s.level > 82 ? '#ff5c48' : '#f4cf95');
     const lx = 505 + 310 * 0.82;
     ctx.strokeStyle = 'rgba(255,120,90,.8)'; ctx.lineWidth = 2;
@@ -1681,11 +1997,11 @@
 
     // lives / mummy
     hudPanel(1010, 18, 248, 112);
-    text('LIVES', 1028, 38, 9.5, 'rgba(255,220,180,.6)', 'left', 800);
+    text('LIVES', 1028, 38, hu ? 10.5 : 9.5, 'rgba(255,220,180,.6)', 'left', 800);
     for (let i = 0; i < 3; i++) drawSlipperIcon(1120 + i * 36, 39, i < s.lives);
     const watch = (s.pointerInside || (s.animT - s.lastInput < 1.6)) && !s.phoneCheck;
-    text('MUMMY', 1028, 75, 9.5, 'rgba(255,220,180,.6)', 'left', 800);
-    text(watch ? '👀 watching' : '⚠ LOOKING AWAY', 1240, 75, 9, watch ? 'rgba(150,235,170,.85)' : '#ff7a6a', 'right', 800);
+    text('MUMMY', 1028, 75, hu ? 10.5 : 9.5, 'rgba(255,220,180,.6)', 'left', 800);
+    text(watch ? '👀 watching' : '⚠ LOOKING AWAY', 1240, 75, hu ? 10.5 : 9, watch ? 'rgba(150,235,170,.85)' : '#ff7a6a', 'right', 800);
     bar(1028, 88, 212, 12, s.suspicion / 100, '#ffb86b', '#ff3b30');
     if (s.suspicion > 55) {
       ctx.globalAlpha = 0.4 + Math.sin(s.time * 10) * 0.3;
@@ -1837,18 +2153,28 @@
     Sfx.setMuted(!state.muted);
   }
 
+  const HIT_PAD = IS_TOUCH ? 22 : 8;
+  const MUTE_HIT = { x: L.mute.x, y: L.mute.y, r: L.mute.r + (IS_TOUCH ? 18 : 2) };
+  const phoneHit = () => {
+    const r = phoneRect();
+    return {
+      x: r.x - (IS_TOUCH ? 8 : 0), y: r.y - (IS_TOUCH ? 12 : 6),
+      w: r.w + (IS_TOUCH ? 16 : 0), h: r.h + (IS_TOUCH ? 24 : 12),
+    };
+  };
+
   window.addEventListener('pointermove', (e) => {
     setPointer(e);
     state.lastInput = state.animT;
     const s = state, x = s.pointerX, y = s.pointerY;
-    let clickable = inCircle(x, y, L.mute);
+    let clickable = inCircle(x, y, MUTE_HIT);
     if (s.phase === 'playing' && !s.slap && !s.phoneCheck) {
       clickable = clickable || inCircle(x, y, L.blow) || inRect(x, y, L.potHit) ||
-        inRect(x, y, L.panel) || inCircle(x, y, { x: L.minus.x, y: L.minus.y, r: L.minus.r + 8 }) ||
-        inCircle(x, y, { x: L.plus.x, y: L.plus.y, r: L.plus.r + 8 }) ||
-        !!(s.phone && s.phone.t > 0.2 && inRect(x, y, { x: L.phone.x, y: L.phone.y - 6, w: L.phone.w, h: L.phone.h + 12 }));
+        inRect(x, y, L.panel) || inCircle(x, y, { x: L.minus.x, y: L.minus.y, r: L.minus.r + HIT_PAD }) ||
+        inCircle(x, y, { x: L.plus.x, y: L.plus.y, r: L.plus.r + HIT_PAD }) ||
+        !!(s.phone && s.phone.t > 0.2 && inRect(x, y, phoneHit()));
     }
-    canvas.style.cursor = clickable ? 'pointer' : 'default';
+    if (!IS_TOUCH) canvas.style.cursor = clickable ? 'pointer' : 'default';
     if (state.knobDrag) {
       const r = canvas.getBoundingClientRect();
       const dy = (state.knobDrag.startY - e.clientY) * (H / r.height);
@@ -1860,23 +2186,23 @@
     Sfx.init();
     setPointer(e);
     state.lastInput = state.animT;
+    if (e.pointerType === 'touch') e.preventDefault();
     const s = state;
     const x = s.pointerX, y = s.pointerY;
 
-    if (inCircle(x, y, L.mute)) { toggleMute(); return; }
+    if (inCircle(x, y, MUTE_HIT)) { toggleMute(); return; }
     if (s.phase !== 'playing') return;
     if (s.slap) return;
     if (s.phoneCheck) return;
 
-    if (s.phone) {
-      const pr = { x: L.phone.x, y: L.phone.y - 6, w: L.phone.w, h: L.phone.h + 12 };
-      if (inRect(x, y, pr) && s.phone.t > 0.2) { checkPhone(); return; }
+    if (s.phone && s.phone.t > 0.2 && inRect(x, y, phoneHit())) {
+      checkPhone(); return;
     }
 
-    if (inCircle(x, y, { x: L.minus.x, y: L.minus.y, r: L.minus.r + 8 })) {
+    if (inCircle(x, y, { x: L.minus.x, y: L.minus.y, r: L.minus.r + HIT_PAD })) {
       adjustSetting(-6); Sfx.tick(); return;
     }
-    if (inCircle(x, y, { x: L.plus.x, y: L.plus.y, r: L.plus.r + 8 })) {
+    if (inCircle(x, y, { x: L.plus.x, y: L.plus.y, r: L.plus.r + HIT_PAD })) {
       adjustSetting(6); Sfx.tick(); return;
     }
     if (inRect(x, y, L.panel)) {
@@ -1886,7 +2212,6 @@
     }
     if (inCircle(x, y, L.blow) || inRect(x, y, L.potHit)) {
       s.blowHeld = true;
-      Sfx.init();
       e.preventDefault();
       try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
     }
@@ -1952,6 +2277,11 @@
   document.getElementById('retryBtn').addEventListener('click', (e) => {
     e.preventDefault();
     startGame();
+  });
+  document.getElementById('portraitBtn').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.body.classList.add('allow-portrait');
+    setTimeout(resize, 60);
   });
 
   let last = performance.now();
